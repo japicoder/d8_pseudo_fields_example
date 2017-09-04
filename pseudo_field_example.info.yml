@@ -1,0 +1,7 @@
+name: pseudo_field_example
+type: module
+description: Example about how to define a pseudo field
+core: 8.x
+package: Custom
+dependencies:
+  - profile

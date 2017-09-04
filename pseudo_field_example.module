@@ -1,0 +1,100 @@
+<?php
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Component\Utility\Html;
+
+// Field names
+define('PSEUDO_EXAMPLE_FIELD_NAME', 'pseudoexample');
+
+/**
+ * Implements hook_help().
+ */
+function pseudo_field_example_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the pseudo_field_example module.
+    case 'help.page.pseudo_field_example':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Example module') . '</p>';
+      return $output;
+
+    default:
+  }
+}
+
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function pseudo_field_example_entity_extra_field_info() {
+  $extra = [];
+
+  $extra['node']['page']['display'][PSEUDO_EXAMPLE_FIELD_NAME] = [
+    'label' => t('Pseudo example field'),
+    'description' => t('Pseudo example field description'),
+    'weight' => 0,
+    'visible' => TRUE,
+  ];
+
+  return $extra;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view().
+ */
+function pseudo_field_example_profile_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  // Apply only to a concrete node bundle
+  if ($entity->bundle() == 'page') {
+    $extra_field_name = PSEUDO_EXAMPLE_FIELD_NAME;
+
+    $element = $display->getComponent($extra_field_name);
+
+    // Add the title and value
+    if ($element) {
+      if ($extra_field_name == PSEUDO_EXAMPLE_FIELD_NAME) {
+        $element += [
+          '#title' => t('Pseudo example field'),
+          '#markup' => t('Lorem ipsum dolor example text'),
+        ];
+      }
+
+      // -- Render
+      // Add properties required by the "field" theme.
+      $field_type = 'extra_field';
+      $title = isset($element['#title']) ? $element['#title'] : 'title';
+      $label_display = isset($element['#label_display']) ? $element['#label_display'] : 'above';
+
+      $extra_element = [
+        '#theme' => 'field',
+        '#view_mode' => '_custom',
+        '#object' => $entity,
+        '#entity_type' => $entity->getEntityTypeId(),
+        '#bundle' => $entity->bundle(),
+        '#title' => $title,
+        '#label_display' => $label_display,
+        '#field_name' => Html::getClass($extra_field_name),
+        '#field_type' => Html::getClass($field_type),
+        '#is_multiple' => FALSE,
+      ];
+
+      if (isset($element['weight'])) {
+        $extra_element['#weight'] = $element['weight'];
+        unset($element['weight']);
+      }
+
+      if (isset($element['region'])) {
+        $extra_element['#region'] = $element['region'];
+        unset($element['region']);
+      }
+
+      // Only keys in "#items" property are required in
+      // template_preprocess_field().
+      $extra_element['#items'][] = new \stdClass();
+      $extra_element[] = $element;
+
+      $build[$extra_field_name] = $extra_element;
+    }
+  }
+}
